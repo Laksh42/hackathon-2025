@@ -1,450 +1,375 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { 
   Box, 
   TextField, 
   Button, 
-  Typography, 
   Paper, 
-  List, 
-  ListItem, 
-  Divider, 
-  Grid,
+  Typography, 
+  IconButton, 
+  Avatar,
+  Divider,
   CircularProgress,
-  Stepper,
-  Step,
-  StepLabel,
   Alert,
-  Checkbox,
-  FormControlLabel
+  Card,
+  CardContent,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import axios from 'axios';
-import { mockRecommendations, mockNews } from './mockData';
+import AssistantIcon from '@mui/icons-material/Assistant';
+import PersonIcon from '@mui/icons-material/Person';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-// API URL (would be set in .env in production)
-const API_URL = 'http://localhost:5050/api';
-
-// Pre-defined bot questions for onboarding
-const BOT_QUESTIONS = [
-  {
-    id: 'welcome',
-    content: "Welcome to Wells Fargo's Financial Assistant! I'll help you discover personalized financial products based on your needs. Let's start with a few questions about your financial situation.",
-    required: false
-  },
-  {
-    id: 'income',
-    content: "What's your approximate annual income?",
-    required: true
-  },
-  {
-    id: 'expenses',
-    content: "How much do you typically spend per month on expenses?",
-    required: true
-  },
-  {
-    id: 'savings',
-    content: "How much do you have in savings currently?",
-    required: true
-  },
-  {
-    id: 'financial_goals',
-    content: "What are your main financial goals? (e.g., retirement, home purchase, education, etc.)",
-    required: true
-  },
-  {
-    id: 'risk_appetite',
-    content: "How would you describe your risk tolerance for investments? (conservative, moderate, or aggressive)",
-    required: true
-  },
-  {
-    id: 'debt',
-    content: "Do you have any outstanding debt such as student loans, credit cards, or mortgages?",
-    required: true
-  },
-  {
-    id: 'final',
-    content: "Thank you for sharing that information. I'll analyze your financial profile to find the best product recommendations for you.",
-    required: false
-  }
+const ONBOARDING_QUESTIONS = [
+  "Welcome to the Wells Fargo Financial Assistant! I'll help you discover financial products tailored to your needs. First, what's your annual income?",
+  "What are your monthly expenses?",
+  "How much do you have in savings?",
+  "Do you have any specific financial goals? (e.g., buying a home, retirement, education)",
+  "How would you describe your risk tolerance? (conservative, moderate, aggressive)",
+  "Do you have any outstanding loans or debts? If so, please share the details.",
+  "Thank you for sharing your information. Would you like to see personalized product recommendations based on your profile?"
 ];
 
-const steps = ['Basic Info', 'Financial Goals', 'Risk Profile', 'Analysis'];
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#d71e28', // Wells Fargo red
+    },
+    secondary: {
+      main: '#ffff00', // Wells Fargo yellow
+    },
+  },
+});
 
-const ChatInterface = ({ onChatComplete }) => {
+const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
-  const [currentInput, setCurrentInput] = useState('');
+  const [input, setInput] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
+  const [conversationComplete, setConversationComplete] = useState(false);
   const [error, setError] = useState(null);
-  const [useMockData, setUseMockData] = useState(false);
-  
   const messagesEndRef = useRef(null);
-
-  // Initialize with the first bot message
+  const navigate = useNavigate();
+  
+  // Start the conversation when component mounts
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{
-        role: 'bot',
-        content: BOT_QUESTIONS[0].content
-      }]);
-      setCurrentQuestion(1); // Move to first actual question
-    }
-  }, [messages]);
+    addBotMessage(ONBOARDING_QUESTIONS[0]);
+  }, []);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleInputChange = (e) => {
-    setCurrentInput(e.target.value);
+  const addUserMessage = (text) => {
+    console.log('Adding user message:', text);
+    const newMessages = [...messages, { text, sender: 'user' }];
+    setMessages(newMessages);
+    return newMessages;
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    
-    if (!currentInput.trim()) return;
-    
-    // Add user message to chat
-    const newUserMessage = {
-      role: 'user',
-      content: currentInput
-    };
-    
-    console.log(`DEBUG: Adding user message. Current question: ${currentQuestion}/${BOT_QUESTIONS.length}`);
-    
-    setMessages(prevMessages => [...prevMessages, newUserMessage]);
-    setCurrentInput('');
-    
-    // Important: For the last actual question (debt), we need to show the final message and then process
-    if (currentQuestion === 7) { // This is the debt question (index 6) + 1
-      console.log(`DEBUG: This was the last question with user input needed`);
+  const addBotMessage = (text) => {
+    console.log('Adding bot message:', text);
+    setMessages(prev => [...prev, { text, sender: 'bot' }]);
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+
+    const updatedMessages = addUserMessage(input);
+    setInput('');
+
+    if (currentQuestion < ONBOARDING_QUESTIONS.length - 1) {
+      // Move to next question
+      setCurrentQuestion(prev => prev + 1);
       
-      // Add final message
-      const finalMessage = {
-        role: 'bot',
-        content: BOT_QUESTIONS[7].content // Final thank you message
-      };
-      
-      // Add the final message and then process the chat
-      setMessages(prevMessages => {
-        const updatedMessages = [...prevMessages, finalMessage];
-        console.log(`DEBUG: Added final thank you message, now processing chat...`);
-        
-        // Schedule chat processing after state update
-        setTimeout(() => {
-          processCompletedChat();
-        }, 1000);
-        
-        return updatedMessages;
-      });
-      
-      setActiveStep(3); // Final step
-      setCurrentQuestion(8); // Move past the end of questions
-      
-    } 
-    // For other questions, continue the normal flow
-    else if (currentQuestion < BOT_QUESTIONS.length) {
-      // Add next bot question
-      const nextBotMessage = {
-        role: 'bot',
-        content: BOT_QUESTIONS[currentQuestion].content
-      };
-      
+      // Add a small delay before bot responds
       setTimeout(() => {
-        console.log(`DEBUG: Adding bot question ${currentQuestion}: "${BOT_QUESTIONS[currentQuestion].content}"`);
-        setMessages(prevMessages => [...prevMessages, nextBotMessage]);
-        
-        // Update stepper
-        if (currentQuestion === 1) setActiveStep(1);
-        else if (currentQuestion === 4) setActiveStep(2);
-        else if (currentQuestion === 6) setActiveStep(3);
-        
-        console.log(`DEBUG: Incrementing question from ${currentQuestion} to ${currentQuestion + 1}`);
-        setCurrentQuestion(currentQuestion + 1);
-        
-        // IMPORTANT: Check if this was the second-to-last question, and if so, log that the next one will be the final
-        if (currentQuestion + 1 === BOT_QUESTIONS.length - 1) {
-          console.log(`DEBUG: Next question will be the final one. After that, processCompletedChat should run.`);
-        }
+        addBotMessage(ONBOARDING_QUESTIONS[currentQuestion + 1]);
       }, 500);
-    } else {
-      // This should rarely be reached with the new logic above
-      console.log(`DEBUG: Reached final question. currentQuestion=${currentQuestion}, BOT_QUESTIONS.length=${BOT_QUESTIONS.length}`);
-      console.log(`DEBUG: Processing completed chat now...`);
-      await processCompletedChat();
+    } else if (currentQuestion === ONBOARDING_QUESTIONS.length - 1) {
+      // This is the final question in the onboarding process
+      setConversationComplete(true);
+
+      // Check if user wants to proceed with recommendations
+      const userResponse = input.toLowerCase();
+      if (userResponse.includes('yes') || userResponse.includes('sure') || userResponse.includes('ok')) {
+        handleProcessRecommendations(updatedMessages);
+      } else if (userResponse.includes('mock') || userResponse.includes('sample')) {
+        // If user specifically asks for mock data
+        navigate('/recommendations', { 
+          state: { useMockData: true }
+        });
+      } else {
+        addBotMessage("I understand you don't want recommendations right now. Feel free to restart the conversation whenever you're ready.");
+        setConversationComplete(true);
+      }
     }
   };
 
-  const processCompletedChat = async () => {
+  const handleProcessRecommendations = async (updatedConversation) => {
+    console.log('Preparing to get recommendations from API');
+    setIsLoading(true);
+    setError(null);
+
+    // Extract just the text from the messages for the API request
+    const conversationText = updatedConversation.map(msg => ({
+      text: msg.text,
+      sender: msg.sender
+    }));
+
+    console.log('Sending conversation to API:', conversationText);
+
     try {
-      setIsLoading(true);
-      setError(null);
+      // Call the backend API with the conversation history
+      const response = await axios.post('http://localhost:5050/api/chat', {
+        conversation: conversationText
+      }, {
+        timeout: 10000 // 10 second timeout
+      });
+
+      console.log('API response received:', response.data);
       
-      // Add a loading message
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { 
-          role: 'bot', 
-          content: 'Analyzing your financial profile and generating recommendations...' 
-        }
-      ]);
-      
-      // If using mock data, simulate a delay and return mock recommendations
-      if (useMockData) {
-        console.log('Using mock data instead of API call');
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Import the ready-to-use mock response
-        const mockResponse = {
-          recommendations: mockRecommendations,
-          relevant_news: mockNews
-        };
-        
-        console.log('Mock API Response:', mockResponse);
-        
-        // Add a final message indicating redirect is about to happen
-        setMessages(prevMessages => [
-          ...prevMessages, 
-          { 
-            role: 'bot', 
-            content: 'Great! I have your personalized recommendations ready. Redirecting you now...' 
-          }
-        ]);
-        
-        // Short delay before redirect
-        setTimeout(() => {
-          console.log("REDIRECTING with mock data:", mockResponse);
-          onChatComplete(mockResponse);
-          // Add fallback direct navigation after a brief delay
-          setTimeout(() => {
-            console.log("Checking if still on same page, attempting direct redirect");
-            if (window.location.pathname !== '/recommendations') {
-              window.location.href = '/recommendations';
-            }
-          }, 1500);
-        }, 1000);
-        
-        return;
-      }
-      
-      // Debug: Log all messages being sent to API
-      console.log('Sending messages to API:', messages);
-      
-      // Create a complete set of messages including the last user input
-      const completeMessages = messages;
-      
-      // Send the entire conversation to the API with a timeout
-      console.log('Sending POST request to:', `${API_URL}/chat`);
-      try {
-        const response = await axios.post(`${API_URL}/chat`, {
-          messages: completeMessages
-        }, {
-          timeout: 10000 // 10 second timeout
+      if (response.data) {
+        // Navigate to recommendations page with the data
+        navigate('/recommendations', { 
+          state: { recommendations: response.data }
         });
-        
-        // Debug: Log API response
-        console.log('API Response received:', response.data);
-        
-        // Check if response contains expected data
-        if (!response.data) {
-          throw new Error('Empty response from server');
-        }
-        
-        // Add a final message indicating redirect is about to happen
-        setMessages(prevMessages => [
-          ...prevMessages, 
-          { 
-            role: 'bot', 
-            content: 'Great! I have your personalized recommendations ready. Redirecting you to the results page...' 
-          }
-        ]);
-        
-        // Short delay before redirect
-        setTimeout(() => {
-          console.log("REDIRECTING with API data:", response.data);
-          onChatComplete(response.data);
-          // Add fallback direct navigation after a brief delay
-          setTimeout(() => {
-            console.log("Checking if still on same page, attempting direct redirect");
-            if (window.location.pathname !== '/recommendations') {
-              window.location.href = '/recommendations';
-            }
-          }, 1500);
-        }, 1000);
-        
-      } catch (axiosError) {
-        console.error('Axios error details:', axiosError);
-        if (axiosError.response) {
-          console.error('Response status:', axiosError.response.status);
-          console.error('Response data:', axiosError.response.data);
-        }
-        throw axiosError; // rethrow to be caught by outer try/catch
+      } else {
+        throw new Error('API response is empty');
       }
+    } catch (err) {
+      console.error('Error getting recommendations:', err);
       
-    } catch (error) {
-      console.error('Error processing chat:', error);
+      let errorMessage = "Sorry, there was an error processing your request.";
       
-      let errorMessage = 'Sorry, there was an error processing your information. Please try again.';
-      
-      if (error.code === 'ECONNABORTED') {
-        errorMessage = 'The request timed out. Please ensure all backend services are running.';
-      } else if (error.response && error.response.data && error.response.data.error) {
-        errorMessage = `Error: ${error.response.data.error}`;
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = "Request timed out. The backend service might be unavailable.";
+      } else if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage = `Server error: ${err.response.status} - ${err.response.data.message || err.response.statusText}`;
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = "No response from server. Please check your connection or try again later.";
       }
       
       setError(errorMessage);
-      
-      // Add error message to chat
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { 
-          role: 'bot', 
-          content: errorMessage
-        }
-      ]);
-      
-      // Allow retry
-      setCurrentQuestion(BOT_QUESTIONS.length - 1);
-      
-    } finally {
       setIsLoading(false);
+      addBotMessage(errorMessage);
     }
   };
 
-  // Function to handle a manual retry
-  const handleRetry = async () => {
-    await processCompletedChat();
+  const handleRetry = () => {
+    // Add a message indicating we're going to use mock data
+    addBotMessage("Let me show you some sample recommendations instead.");
+    
+    // Navigate using mock data
+    setTimeout(() => {
+      navigate('/recommendations', { 
+        state: { useMockData: true }
+      });
+    }, 1000);
   };
-  
-  // Function to use mock data instead
-  const handleUseMockData = () => {
-    setUseMockData(!useMockData);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const resetConversation = () => {
+    console.log('Resetting conversation');
+    setMessages([]);
+    setCurrentQuestion(0);
+    setConversationComplete(false);
+    setIsLoading(false);
+    setError(null);
+    
+    // Add a small delay before adding the first question
+    setTimeout(() => {
+      addBotMessage(ONBOARDING_QUESTIONS[0]);
+    }, 200);
   };
 
   return (
-    <Box>
-      <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-          <Box sx={{ mt: 1 }}>
-            <FormControlLabel
-              control={
-                <Checkbox 
-                  checked={useMockData}
-                  onChange={handleUseMockData}
-                  size="small"
-                />
-              }
-              label="Use sample data instead (Demo mode)"
-            />
-          </Box>
-        </Alert>
-      )}
-      
-      <Box sx={{ height: 400, overflow: 'auto', mb: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1 }}>
-        <List>
-          {messages.map((message, index) => (
-            <React.Fragment key={index}>
-              <ListItem alignItems="flex-start" sx={{ 
-                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-                mb: 1 
-              }}>
-                <Paper 
-                  elevation={1} 
-                  sx={{ 
-                    p: 2, 
-                    maxWidth: '75%',
-                    bgcolor: message.role === 'user' ? '#e3f2fd' : '#ffffff',
-                    borderRadius: message.role === 'user' ? '20px 20px 0 20px' : '20px 20px 20px 0',
-                  }}
-                >
-                  <Typography variant="body1">
-                    {message.content}
-                  </Typography>
-                </Paper>
-              </ListItem>
-              {index < messages.length - 1 && <Divider component="li" />}
-            </React.Fragment>
-          ))}
-          <div ref={messagesEndRef} />
-        </List>
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        {!error && (
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={useMockData}
-                onChange={handleUseMockData}
-                size="small"
-              />
-            }
-            label="Use sample data (Demo mode)"
-          />
-        )}
-        
-        {currentQuestion >= 7 && (
-          <Button 
-            color="secondary" 
-            variant="contained" 
-            onClick={() => {
-              console.log("DEBUG: Mock data button clicked");
-              setUseMockData(true);
-              processCompletedChat();
-            }}
-            sx={{ ml: 'auto' }}
-          >
-            Generate Sample Recommendations
-          </Button>
-        )}
-      </Box>
-
-      <Box component="form" onSubmit={handleSendMessage} sx={{ display: 'flex' }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Type your response here..."
-          value={currentInput}
-          onChange={handleInputChange}
-          disabled={isLoading || currentQuestion >= BOT_QUESTIONS.length}
-          sx={{ mr: 1 }}
-        />
-        <Button 
-          variant="contained" 
-          color="primary" 
-          type="submit"
-          disabled={isLoading || currentQuestion >= BOT_QUESTIONS.length || !currentInput.trim()}
-          endIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+    <ThemeProvider theme={theme}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          maxWidth: 800, 
+          mx: 'auto', 
+          mt: 4, 
+          height: 'calc(100vh - 100px)',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 2,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header */}
+        <Box 
+          sx={{ 
+            p: 2, 
+            bgcolor: 'primary.main', 
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
         >
-          Send
-        </Button>
-        
-        {currentQuestion >= BOT_QUESTIONS.length && error && (
-          <Button 
-            variant="outlined" 
-            color="secondary"
-            onClick={handleRetry}
-            disabled={isLoading}
-            sx={{ ml: 1 }}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <AssistantIcon sx={{ mr: 1 }} />
+            <Typography variant="h6">
+              Wells Fargo Financial Assistant
+            </Typography>
+          </Box>
+          <IconButton 
+            color="inherit" 
+            onClick={resetConversation}
+            title="Reset conversation"
           >
-            Retry
+            <RestartAltIcon />
+          </IconButton>
+        </Box>
+        
+        <Divider />
+        
+        {/* Messages area */}
+        <Box 
+          sx={{ 
+            p: 2, 
+            flexGrow: 1, 
+            overflow: 'auto',
+            bgcolor: '#f5f5f5'
+          }}
+        >
+          {messages.map((message, index) => (
+            <Box 
+              key={index} 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
+                mb: 2
+              }}
+            >
+              <Card 
+                elevation={1}
+                sx={{ 
+                  maxWidth: '80%', 
+                  borderRadius: 2,
+                  bgcolor: message.sender === 'user' ? 'primary.light' : 'white',
+                  color: message.sender === 'user' ? 'white' : 'text.primary',
+                }}
+              >
+                <CardContent sx={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  p: 2, 
+                  '&:last-child': { pb: 2 }
+                }}>
+                  {message.sender === 'bot' && (
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: 'primary.main', 
+                        width: 32, 
+                        height: 32, 
+                        mr: 1
+                      }}
+                    >
+                      <AssistantIcon fontSize="small" />
+                    </Avatar>
+                  )}
+                  <Typography variant="body1" component="div" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {message.text}
+                  </Typography>
+                  {message.sender === 'user' && (
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: 'grey.700', 
+                        width: 32, 
+                        height: 32, 
+                        ml: 1
+                      }}
+                    >
+                      <PersonIcon fontSize="small" />
+                    </Avatar>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
+          ))}
+          
+          {isLoading && (
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                p: 2,
+                flexDirection: 'column'
+              }}
+            >
+              <CircularProgress size={40} thickness={4} />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Analyzing your financial profile...
+              </Typography>
+            </Box>
+          )}
+          
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ mb: 2 }}
+              action={
+                <Button color="inherit" size="small" onClick={handleRetry}>
+                  Try Sample Data
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </Box>
+        
+        <Divider />
+        
+        {/* Input area */}
+        <Box 
+          sx={{ 
+            p: 2, 
+            bgcolor: 'background.paper', 
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading || conversationComplete}
+            size="small"
+            sx={{ mr: 1 }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<SendIcon />}
+            onClick={handleSendMessage}
+            disabled={!input.trim() || isLoading || conversationComplete}
+          >
+            Send
           </Button>
-        )}
-      </Box>
-    </Box>
+        </Box>
+      </Paper>
+    </ThemeProvider>
   );
 };
 
