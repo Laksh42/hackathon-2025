@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   frontend:
@@ -9,9 +9,14 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
+      - REACT_APP_DOCKER=true
+      - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
     depends_on:
       - backend
+      - recommender
+      - understander
+      - auth
     networks:
       - app-network
 
@@ -22,36 +27,86 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - FLASK_ENV=development
-      - UNDERSTANDER_SERVICE_URL=http://understander:5051/process
-      - RECOMMENDER_SERVICE_URL=http://recommender:5052/recommend
+      - PORT=5050
+      - CONFIG_PATH=/app/config.json
+      - UNDERSTANDER_SERVICE=http://understander:5052
+      - RECOMMENDER_SERVICE=http://recommender:5051
+      - AUTH_SERVICE=http://auth:5053
+      - DEBUG=true
     depends_on:
-      - understander
       - recommender
-    networks:
-      - app-network
-
-  understander:
-    build: ./understander
-    ports:
-      - "5051:5051"
-    volumes:
-      - ./understander:/app
-    environment:
-      - FLASK_ENV=development
+      - understander
+      - auth
     networks:
       - app-network
 
   recommender:
     build: ./recommender
     ports:
-      - "5052:5052"
+      - "5051:5051"
     volumes:
       - ./recommender:/app
     environment:
-      - FLASK_ENV=development
+      - PORT=5051
+      - CONFIG_PATH=/app/config.json
+      - DEBUG=true
     networks:
       - app-network
+
+  understander:
+    build: ./understander
+    ports:
+      - "5052:5052"
+    volumes:
+      - ./understander:/app
+    environment:
+      - PORT=5052
+      - CONFIG_PATH=/app/config.json
+      - DEBUG=true
+    networks:
+      - app-network
+
+  auth:
+    build: ./auth
+    ports:
+      - "5053:5053"
+    volumes:
+      - ./auth:/app
+    environment:
+      - PORT=5053
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/financial_assistant
+      - JWT_SECRET=your_jwt_secret_key_change_in_production
+      - DEBUG=true
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=financial_assistant
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
 
 networks:
   app-network:
