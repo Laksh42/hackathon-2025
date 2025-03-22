@@ -1,71 +1,49 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Box, AppBar, Toolbar, Typography, Container } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ChatPage from './pages/ChatPage';
-import RecommendationsPage from './pages/RecommendationsPage';
-import Layout from './components/Layout';
-import ErrorBoundary from './ErrorBoundary';
+import ChatInterface from './ChatInterface';
+import RecommendationsPage from './RecommendationsPage';
 
-// Create a custom theme with Wells Fargo colors
+// Wells Fargo theme colors
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#D71E28', // Wells Fargo red
+      main: '#d71e28', // Wells Fargo red
     },
     secondary: {
-      main: '#FFBF3F', // Wells Fargo gold
-    },
-    background: {
-      default: '#FFFFFF',
+      main: '#ffff00', // Wells Fargo yellow
     },
   },
   typography: {
-    fontFamily: '"Helvetica Neue", Arial, sans-serif',
-    h4: {
-      fontWeight: 700,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 4,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
+    fontFamily: [
+      'Helvetica Neue',
+      'Arial',
+      'sans-serif'
+    ].join(','),
   },
 });
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <ErrorBoundary>
-        <BrowserRouter>
-          <Layout>
+      <Router>
+        <Box sx={{ flexGrow: 1 }}>
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Wells Fargo Financial Assistant
+              </Typography>
+            </Toolbar>
+          </AppBar>
+          <Container>
             <Routes>
-              <Route path="/" element={<ChatPage />} />
+              <Route path="/" element={<ChatInterface />} />
               <Route path="/recommendations" element={<RecommendationsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </Layout>
-        </BrowserRouter>
-      </ErrorBoundary>
+          </Container>
+        </Box>
+      </Router>
     </ThemeProvider>
   );
 }
