@@ -1,38 +1,45 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 import os
 from dotenv import load_dotenv
-from auth import init_app
 
 # Load environment variables
 load_dotenv()
+
+# Import models
+from models import db
+import auth
 
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     
-    # Enable CORS
-    CORS(app)
+    # Enable CORS with permissive settings
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     
-    # Configure SQLAlchemy
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'postgresql://postgres:postgres@db:5432/wells_fargo')
+    # Configure database
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///auth.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Configure JWT
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'super-secret')  # Change in production!
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 60 * 60 * 24  # 24 hours
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-secret-key')
+    jwt = JWTManager(app)
     
-    # Initialize auth module
-    init_app(app)
+    # Initialize database
+    db.init_app(app)
     
-    @app.route('/health', methods=['GET'])
+    # Register blueprints
+    auth.init_app(app)
+    
+    @app.route('/health')
     def health_check():
-        """Health check endpoint"""
-        return {'status': 'healthy', 'service': 'auth'}
+        return jsonify({"status": "healthy", "service": "auth_root"})
     
     return app
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     port = int(os.getenv('PORT', 5053))
     app.run(host='0.0.0.0', port=port, debug=True)

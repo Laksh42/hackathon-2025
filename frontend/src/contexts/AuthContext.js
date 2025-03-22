@@ -24,26 +24,35 @@ export const AuthProvider = ({ children }) => {
       try {
         // Check if user is authenticated by token
         const token = localStorage.getItem(config.auth.tokenKey);
+        console.log('AuthContext initAuth: Token from localStorage:', token ? 'Found' : 'Not found');
+        
         if (!token) {
+          console.log('AuthContext initAuth: No token found, setting loading to false');
           setLoading(false);
           return;
         }
 
         // Set default Authorization header for all axios requests
+        console.log('AuthContext initAuth: Setting Authorization header');
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Validate token and get user data
+        console.log('AuthContext initAuth: Validating token with backend');
         const response = await axios.get(
           `${config.services.auth.url}/api/v1/auth/check-auth`,
           { timeout: 5000 }
         );
 
+        console.log('AuthContext initAuth: Auth check response:', response.data);
+
         if (response.data && response.data.authenticated) {
+          console.log('AuthContext initAuth: Token valid, setting user data');
           setCurrentUser(response.data.user);
           setIsAuthenticated(true);
           
           // Check if user has persona data
           if (response.data.has_persona) {
+            console.log('AuthContext initAuth: User has persona, fetching data');
             try {
               const personaResponse = await axios.get(
                 `${config.services.auth.url}/api/v1/auth/persona`,
@@ -51,14 +60,16 @@ export const AuthProvider = ({ children }) => {
               );
               
               if (personaResponse.data && personaResponse.data.persona) {
+                console.log('AuthContext initAuth: Persona data received');
                 setUserPersona(personaResponse.data.persona);
               }
             } catch (personaError) {
-              console.error('Error fetching user persona:', personaError);
+              console.error('Error fetching user persona during init:', personaError);
             }
           }
         } else {
-          // Invalid token
+          console.log('AuthContext initAuth: Token invalid, logging out');
+          // Invalid token, clear auth state
           handleLogout();
         }
       } catch (error) {
@@ -84,16 +95,22 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError('');
-
+      
+      console.log('AuthContext: Attempting login for', email);
+      
       const response = await axios.post(
         `${config.services.auth.url}/api/v1/auth/login`,
         { email, password },
         { timeout: 10000 }
       );
 
+      console.log('AuthContext: Login response received:', response.data);
+
       if (response.data && response.data.access_token) {
         // Store token in localStorage
         localStorage.setItem(config.auth.tokenKey, response.data.access_token);
+        
+        console.log('AuthContext: Token stored in localStorage');
         
         // Set default Authorization header
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
@@ -101,6 +118,8 @@ export const AuthProvider = ({ children }) => {
         // Update user state
         setCurrentUser(response.data.user || { email });
         setIsAuthenticated(true);
+        
+        console.log('AuthContext: User authenticated, has_persona:', response.data.has_persona);
         
         // Check if user has persona
         if (response.data.has_persona) {
@@ -112,6 +131,7 @@ export const AuthProvider = ({ children }) => {
             
             if (personaResponse.data && personaResponse.data.persona) {
               setUserPersona(personaResponse.data.persona);
+              console.log('AuthContext: User persona loaded');
             }
           } catch (personaError) {
             console.error('Error fetching user persona:', personaError);
@@ -124,6 +144,7 @@ export const AuthProvider = ({ children }) => {
         };
       } else {
         setError('Invalid login response');
+        console.error('AuthContext: Invalid login response - no access_token');
         return { success: false, error: 'Invalid login response' };
       }
     } catch (error) {
@@ -150,16 +171,23 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError('');
 
+      console.log('AuthContext: Attempting registration for', email);
+
       const response = await axios.post(
         `${config.services.auth.url}/api/v1/auth/register`,
         { email, password },
         { timeout: 10000 }
       );
 
-      if (response.data && response.data.success) {
+      console.log('AuthContext: Registration response received:', response.data);
+
+      if (response.data && response.data.access_token) {
+        // Registration successful
+        console.log('AuthContext: Registration successful');
         return { success: true };
       } else {
         setError('Invalid registration response');
+        console.error('AuthContext: Invalid registration response');
         return { success: false, error: 'Invalid registration response' };
       }
     } catch (error) {

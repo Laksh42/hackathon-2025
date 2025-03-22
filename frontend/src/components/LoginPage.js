@@ -13,7 +13,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { config } from '../config';
 
 const LoginPage = () => {
@@ -25,38 +25,34 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Reset error and success messages
     setError('');
     setSuccessMessage('');
     setLoading(true);
-
+    
     try {
-      // Form validation
+      // Validate form
       if (!email || !password) {
-        setError('Please fill out all fields');
+        setError('Email and password are required');
         setLoading(false);
         return;
       }
-
+      
       // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!emailRegex.test(email)) {
         setError('Please enter a valid email address');
         setLoading(false);
         return;
       }
-
-      // For registration, validate password match
+      
       if (!isLogin) {
-        if (password !== confirmPassword) {
-          setError('Passwords do not match');
-          setLoading(false);
-          return;
-        }
-
         // Password strength check
         if (password.length < 8) {
           setError('Password must be at least 8 characters');
@@ -65,52 +61,41 @@ const LoginPage = () => {
         }
       }
 
-      // Determine API endpoint based on login/register mode
-      const endpoint = isLogin ? 
-        `${config.services.auth.url}/api/v1/auth/login` : 
-        `${config.services.auth.url}/api/v1/auth/register`;
-
-      // Prepare request data
-      const requestData = { email, password };
-
-      // Make API request
-      const response = await axios.post(endpoint, requestData, {
-        timeout: 10000
-      });
-
-      // Handle successful response
-      if (response.data) {
-        if (isLogin) {
-          // Store JWT token in localStorage
-          localStorage.setItem('token', response.data.access_token);
-          
-          // Check if user has completed persona questionnaire
-          const hasPersona = response.data.has_persona;
-          
-          // Redirect based on persona status
-          if (hasPersona) {
-            // Navigate to main dashboard
+      if (isLogin) {
+        console.log('Using auth context login');
+        // Use the AuthContext login function
+        const result = await login(email, password);
+        console.log('Login result:', result);
+        
+        if (result.success) {
+          console.log('Login successful, hasPersona:', result.hasPersona);
+          // Navigate based on persona status
+          if (result.hasPersona) {
+            console.log('Navigating to dashboard');
             navigate('/dashboard');
           } else {
-            // Navigate to onboarding chat
+            console.log('Navigating to chat');
             navigate('/chat');
           }
         } else {
+          setError(result.error || 'Login failed');
+        }
+      } else {
+        console.log('Using auth context register');
+        // Use the AuthContext register function
+        const result = await register(email, password);
+        
+        if (result.success) {
           // Show success message for registration
           setSuccessMessage('Registration successful! You can now log in.');
           setIsLogin(true);
+        } else {
+          setError(result.error || 'Registration failed');
         }
       }
     } catch (error) {
       console.error('Auth error:', error);
-      
-      if (error.response && error.response.data && error.response.data.error) {
-        setError(error.response.data.error);
-      } else if (error.code === 'ECONNABORTED') {
-        setError('Connection timeout. Please try again later.');
-      } else {
-        setError('An error occurred. Please try again later.');
-      }
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
