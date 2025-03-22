@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./backend:/app
+    environment:
+      - FLASK_ENV=development
+      - UNDERSTANDER_SERVICE_URL=http://understander:5051/process
+      - RECOMMENDER_SERVICE_URL=http://recommender:5052/recommend
+    depends_on:
+      - understander
+      - recommender
+    networks:
+      - app-network
+
+  understander:
+    build: ./understander
+    ports:
+      - "5051:5051"
+    volumes:
+      - ./understander:/app
+    environment:
+      - FLASK_ENV=development
+    networks:
+      - app-network
+
+  recommender:
+    build: ./recommender
+    ports:
+      - "5052:5052"
+    volumes:
+      - ./recommender:/app
+    environment:
+      - FLASK_ENV=development
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
