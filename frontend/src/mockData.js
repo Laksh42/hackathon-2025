@@ -1,75 +1,68 @@
-// Mock data to use in case of API connection issues
+// Mock data for testing the UI without backend connectivity
+
 export const mockRecommendations = [
   {
-    confidence: 0.95,
-    confidence_score: 0.95,
-    explanation: "Based on your high savings and moderate risk tolerance, this managed investment portfolio can help you grow your wealth through diversified investments.",
+    confidence: 0.97,
+    explanation: "Based on your income level, savings amount, and moderate risk tolerance, a managed investment portfolio would help grow your wealth while working towards your home buying goal.",
     product: {
-      id: "investment_account",
+      description: "Our professionally managed investment portfolio offers diversified investments tailored to your risk profile and financial goals.",
+      features: [
+        "Professional portfolio management",
+        "Diversified investment selection",
+        "Regular portfolio rebalancing",
+        "Quarterly performance reviews",
+        "Tax-efficient investment strategies"
+      ],
+      id: "inv-port-01",
       name: "Managed Investment Portfolio",
-      description: "Let our experts manage your investments with a diversified portfolio tailored to your goals.",
-      features: [
-        "Professional management",
-        "Diversified portfolio",
-        "Low management fees",
-        "Mobile account access"
-      ],
-      vector: [0.7, 0.4, 0.8, 0.7, 0.6, 0.3]
+      vector: [0.8, 0.6, 0.7, 0.9, 0.5]
     }
   },
   {
-    confidence: 0.91,
-    confidence_score: 0.91,
-    explanation: "Based on your financial goals and savings habits, this retirement account offers tax advantages to help you prepare for the future.",
+    confidence: 0.95,
+    explanation: "Your income level and goal to buy a house make you an excellent candidate for our 30-year fixed mortgage product with competitive rates.",
     product: {
-      id: "retirement_account",
-      name: "IRA Retirement Account",
-      description: "Plan for your retirement with tax-advantaged IRA accounts.",
+      description: "Our 30-year fixed mortgage offers stable monthly payments with competitive interest rates to help you achieve your home ownership goals.",
       features: [
-        "Tax-advantaged growth",
-        "Multiple investment options",
-        "No account fees",
-        "Retirement planning tools"
-      ],
-      vector: [0.6, 0.3, 0.5, 0.9, 0.7, 0.2]
-    }
-  },
-  {
-    confidence: 0.87,
-    confidence_score: 0.87,
-    explanation: "With your goal of home ownership and stable financial profile, our fixed-rate mortgage offers competitive rates and predictable payments.",
-    product: {
-      id: "mortgage_30yr",
-      name: "30-Year Fixed Mortgage",
-      description: "Secure your dream home with our competitive 30-year fixed-rate mortgage.",
-      features: [
-        "Fixed interest rate",
+        "Fixed interest rate for entire loan term",
         "Predictable monthly payments",
         "No prepayment penalties",
-        "Online application process"
+        "Rate lock options",
+        "First-time homebuyer programs available"
       ],
-      vector: [0.3, 0.2, 0.4, 0.7, 0.8, 0.7]
+      id: "mort-30yr-01",
+      name: "30-Year Fixed Mortgage",
+      vector: [0.9, 0.2, 0.8, 0.7, 0.3]
+    }
+  },
+  {
+    confidence: 0.92,
+    explanation: "With your stated savings goals and moderate risk tolerance, an IRA retirement account would provide tax advantages while building your long-term wealth.",
+    product: {
+      description: "Our IRA accounts offer tax-advantaged retirement savings with a wide range of investment options to meet your long-term financial goals.",
+      features: [
+        "Tax-deferred or tax-free growth potential",
+        "Multiple investment options",
+        "Potential tax deductions",
+        "Flexible contribution options",
+        "Online account management"
+      ],
+      id: "ret-ira-01",
+      name: "IRA Retirement Account",
+      vector: [0.7, 0.8, 0.6, 0.5, 0.9]
     }
   }
 ];
 
 export const mockNews = [
   {
-    id: "housing_market_growth",
+    id: "news-1",
     title: "Housing Market Continues Strong Growth",
-    summary: "The housing market continues to show strength with rising prices across most regions.",
-    vector: [0.2, 0.1, 0.3, 0.8, 0.7, 0.4]
+    summary: "The housing market continues to show strong growth with home prices rising in most metropolitan areas. Analysts suggest this trend may continue through the year, making it a potential opportunity for prospective homebuyers to enter the market before further increases."
   },
   {
-    id: "stock_market_volatility",
+    id: "news-2",
     title: "Stock Market Shows Increased Volatility",
-    summary: "The stock market has experienced increased volatility in recent weeks.",
-    vector: [0.1, 0.2, 0.9, 0.5, 0.4, 0.2]
+    summary: "Recent economic data has led to increased volatility in the stock market. Financial advisors recommend diversified portfolios and long-term investment strategies to navigate through market fluctuations."
   }
 ];
-
-// Export a ready-to-use mock response object
-export const mockResponse = {
-  recommendations: mockRecommendations,
-  relevant_news: mockNews
-};
