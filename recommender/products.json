@@ -1,0 +1,212 @@
+[
+  {
+    "id": "wf-retirement-401k",
+    "name": "Wells Fargo Retirement 401(k) Plan",
+    "description": "A tax-advantaged retirement savings plan with employer matching contributions and a diverse range of investment options.",
+    "features": [
+      "Employer matching contributions up to 6%",
+      "Pre-tax contributions reduce current taxable income",
+      "Automated contribution adjustments",
+      "Diverse investment options",
+      "Mobile app management"
+    ],
+    "tags": ["retirement", "tax-advantage", "long-term", "moderate"],
+    "vector": [0.1, 0.3, 0.8, 0.0, 0.9, 0.0, 0.5, 0.3, 0.0, 0.8]
+  },
+  {
+    "id": "wf-ira-traditional",
+    "name": "Wells Fargo Traditional IRA",
+    "description": "A traditional Individual Retirement Account (IRA) that allows tax-deferred growth on your investments until retirement.",
+    "features": [
+      "Tax-deferred growth",
+      "Potential tax-deductible contributions",
+      "Multiple investment options",
+      "No income limits for contributions",
+      "Consolidate retirement accounts"
+    ],
+    "tags": ["retirement", "tax-advantage", "long-term", "moderate"],
+    "vector": [0.2, 0.1, 0.9, 0.0, 0.8, 0.0, 0.5, 0.4, 0.0, 0.7]
+  },
+  {
+    "id": "wf-ira-roth",
+    "name": "Wells Fargo Roth IRA",
+    "description": "A Roth IRA that allows for tax-free growth and tax-free withdrawals in retirement, ideal for those expecting higher future tax rates.",
+    "features": [
+      "Tax-free growth",
+      "Tax-free qualified withdrawals",
+      "No required minimum distributions",
+      "Financial flexibility in retirement",
+      "Access to contributions penalty-free"
+    ],
+    "tags": ["retirement", "tax-advantage", "long-term", "moderate"],
+    "vector": [0.2, 0.2, 0.9, 0.0, 0.8, 0.0, 0.6, 0.3, 0.0, 0.6]
+  },
+  {
+    "id": "wf-mortgage-30yr",
+    "name": "Wells Fargo 30-Year Fixed Mortgage",
+    "description": "A fixed-rate mortgage with a 30-year term, providing stable monthly payments for the life of the loan.",
+    "features": [
+      "Fixed interest rate for 30 years",
+      "Predictable monthly payments",
+      "No payment increases over time",
+      "Build equity in your home",
+      "Potential tax benefits"
+    ],
+    "tags": ["home_purchase", "debt", "long-term", "conservative"],
+    "vector": [0.7, 0.1, 0.1, 0.9, 0.1, 0.0, 0.3, 0.8, 0.7, 0.0]
+  },
+  {
+    "id": "wf-mortgage-15yr",
+    "name": "Wells Fargo 15-Year Fixed Mortgage",
+    "description": "A fixed-rate mortgage with a 15-year term, offering faster equity building and lower total interest costs.",
+    "features": [
+      "Fixed interest rate for 15 years",
+      "Lower total interest costs",
+      "Build equity faster",
+      "Own your home in half the time",
+      "Lower interest rate than 30-year mortgages"
+    ],
+    "tags": ["home_purchase", "debt", "medium-term", "moderate"],
+    "vector": [0.6, 0.2, 0.2, 0.9, 0.1, 0.0, 0.5, 0.7, 0.7, 0.0]
+  },
+  {
+    "id": "wf-invest-portfolio",
+    "name": "Wells Fargo Diversified Investment Portfolio",
+    "description": "A professionally managed investment portfolio designed to balance growth and risk according to your financial goals.",
+    "features": [
+      "Professional portfolio management",
+      "Personalized investment strategy",
+      "Regular portfolio rebalancing",
+      "Access to exclusive investment options",
+      "Comprehensive performance reporting"
+    ],
+    "tags": ["investment", "growth", "medium-term", "moderate"],
+    "vector": [0.3, 0.7, 0.4, 0.0, 0.3, 0.5, 0.6, 0.2, 0.0, 0.9]
+  },
+  {
+    "id": "wf-invest-growth",
+    "name": "Wells Fargo Growth Investment Portfolio",
+    "description": "An aggressive investment portfolio focused on capital appreciation for those with higher risk tolerance.",
+    "features": [
+      "Focus on high-growth investments",
+      "Higher potential returns",
+      "Strategic allocation to emerging markets",
+      "Active management approach",
+      "Advanced risk management techniques"
+    ],
+    "tags": ["investment", "growth", "long-term", "aggressive"],
+    "vector": [0.2, 0.9, 0.3, 0.0, 0.2, 0.6, 0.8, 0.1, 0.0, 0.9]
+  },
+  {
+    "id": "wf-invest-income",
+    "name": "Wells Fargo Income-Focused Portfolio",
+    "description": "A conservative investment portfolio designed to generate steady income while preserving capital.",
+    "features": [
+      "Focus on income-generating assets",
+      "Emphasis on capital preservation",
+      "Regular income distributions",
+      "Lower volatility approach",
+      "Bonds, dividend stocks, and alternatives"
+    ],
+    "tags": ["investment", "income", "medium-term", "conservative"],
+    "vector": [0.3, 0.5, 0.5, 0.0, 0.4, 0.3, 0.3, 0.6, 0.0, 0.8]
+  },
+  {
+    "id": "wf-savings-highyield",
+    "name": "Wells Fargo High-Yield Savings Account",
+    "description": "A savings account offering higher interest rates than standard savings accounts for growing your emergency fund or short-term savings.",
+    "features": [
+      "Competitive interest rates",
+      "No monthly service fees",
+      "FDIC insured up to $250,000",
+      "Online and mobile access",
+      "Easy funds transfer"
+    ],
+    "tags": ["savings", "emergency_fund", "short-term", "conservative"],
+    "vector": [0.2, 0.2, 0.6, 0.0, 0.5, 0.1, 0.1, 0.9, 0.0, 0.3]
+  },
+  {
+    "id": "wf-savings-moneymarket",
+    "name": "Wells Fargo Money Market Account",
+    "description": "A money market account that offers check-writing privileges and competitive interest rates for your short-term savings.",
+    "features": [
+      "Higher interest rates than regular savings",
+      "Check-writing privileges",
+      "Debit card access",
+      "FDIC insured up to $250,000",
+      "Online and mobile management"
+    ],
+    "tags": ["savings", "emergency_fund", "short-term", "conservative"],
+    "vector": [0.2, 0.3, 0.5, 0.0, 0.6, 0.2, 0.2, 0.9, 0.0, 0.4]
+  },
+  {
+    "id": "wf-creditcard-rewards",
+    "name": "Wells Fargo Rewards Credit Card",
+    "description": "A rewards credit card that earns points on everyday purchases, redeemable for travel, merchandise, or cash back.",
+    "features": [
+      "Earn points on every purchase",
+      "No annual fee",
+      "Points don't expire",
+      "Online rewards portal",
+      "Purchase protection benefits"
+    ],
+    "tags": ["credit", "rewards", "short-term", "moderate"],
+    "vector": [0.1, 0.3, 0.1, 0.0, 0.1, 0.8, 0.4, 0.3, 0.6, 0.2]
+  },
+  {
+    "id": "wf-creditcard-cashback",
+    "name": "Wells Fargo Cash Back Credit Card",
+    "description": "A cash back credit card that provides a percentage of your spending back as cash rewards.",
+    "features": [
+      "Earn cash back on every purchase",
+      "Higher cash back in select categories",
+      "No annual fee",
+      "Zero liability protection",
+      "Cell phone protection"
+    ],
+    "tags": ["credit", "cash_back", "short-term", "moderate"],
+    "vector": [0.1, 0.4, 0.1, 0.0, 0.1, 0.9, 0.4, 0.2, 0.7, 0.3]
+  },
+  {
+    "id": "wf-loan-personal",
+    "name": "Wells Fargo Personal Loan",
+    "description": "A flexible personal loan with competitive rates for debt consolidation, home improvements, or major purchases.",
+    "features": [
+      "Fixed interest rates and payments",
+      "No collateral required",
+      "Fast funding after approval",
+      "No prepayment penalties",
+      "Multiple term options"
+    ],
+    "tags": ["loan", "debt_consolidation", "medium-term", "moderate"],
+    "vector": [0.5, 0.1, 0.1, 0.1, 0.1, 0.6, 0.5, 0.2, 0.9, 0.1]
+  },
+  {
+    "id": "wf-loan-auto",
+    "name": "Wells Fargo Auto Loan",
+    "description": "An auto loan with competitive rates for new or used vehicle purchases or refinancing existing auto loans.",
+    "features": [
+      "Competitive interest rates",
+      "Flexible term options",
+      "No application fees",
+      "Easy online application",
+      "Quick approval process"
+    ],
+    "tags": ["loan", "auto", "medium-term", "moderate"],
+    "vector": [0.4, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.2, 0.9, 0.1]
+  },
+  {
+    "id": "wf-loan-student",
+    "name": "Wells Fargo Student Loan",
+    "description": "A student loan designed to help cover educational expenses with flexible repayment options.",
+    "features": [
+      "Competitive interest rates",
+      "No origination fees",
+      "Multiple repayment options",
+      "Interest rate discounts available",
+      "Cover up to 100% of cost of attendance"
+    ],
+    "tags": ["loan", "education", "long-term", "moderate"],
+    "vector": [0.3, 0.1, 0.1, 0.0, 0.1, 0.4, 0.5, 0.1, 0.8, 0.0]
+  }
+]
