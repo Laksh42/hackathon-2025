@@ -1,0 +1,40 @@
+{
+  "max_dialogues": 5,
+  "chat_timeout": 300,
+  "model_name": "gpt-j",
+  "confidence_threshold": 0.7,
+  "services": {
+    "auth": {
+      "host": "auth",
+      "port": 5053
+    },
+    "backend": {
+      "host": "backend",
+      "port": 5050
+    },
+    "understander": {
+      "host": "understander",
+      "port": 5051
+    },
+    "recommender": {
+      "host": "recommender",
+      "port": 5052
+    }
+  },
+  "dialogue_templates": {
+    "greeting": "Welcome to the Wells Fargo Financial Assistant! I'll help you discover financial products tailored to your needs.",
+    "income_question": "What's your annual income?",
+    "expenses_question": "What are your monthly expenses?",
+    "savings_question": "How much do you have in savings?",
+    "goals_question": "Do you have any specific financial goals? (e.g., buying a home, retirement, education)",
+    "risk_question": "How would you describe your risk tolerance? (conservative, moderate, aggressive)",
+    "debt_question": "Do you have any outstanding loans or debts? If so, please share the details.",
+    "closing_question": "Thank you for sharing your information. Would you like to see personalized product recommendations based on your profile?",
+    "clarification_templates": [
+      "Could you please provide more details about your {topic}?",
+      "I'd like to better understand your {topic}. Can you elaborate?",
+      "To provide the best recommendations, I need more information about your {topic}.",
+      "Would you mind sharing a bit more about your {topic}?"
+    ]
+  }
+}
