@@ -11,7 +11,8 @@ The application is built with a microservices architecture:
 3. **Understander**: Service for processing user conversations
 4. **Recommender**: Service for generating financial recommendations
 5. **Auth**: Service for user authentication and profile management
-6. **Database**: SQLite for development, PostgreSQL for production
+6. **News Analysis**: Service for processing financial news and generating personalized news recommendations using vector embeddings
+7. **Database**: SQLite for development, PostgreSQL for production
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -40,13 +41,42 @@ The application is built with a microservices architecture:
 - **Financial News**: Latest relevant financial news
 - **User Dashboard**: Central view of all recommendations and financial information
 - **Profile Management**: User profile and persona management
+- **Vector-based News Analysis**: Personalized news recommendations based on user profile
+- **Interactive Financial Chatbot**: AI-powered assistant in the dashboard
+- **Understander Service** - Uses AI to understand user messages and identify intents, entities, and sentiment
+- **Recommender Service** - Generates personalized financial product recommendations based on user profile
+- **News Analysis Service** - Processes and indexes financial news articles, providing topic classification and sentiment analysis
+- **News Summarization** - Generates concise summaries of financial news articles with customizable options for length, focus, and style
+  - Single article summarization
+  - Multi-article collection summarization
+  - Customizable focus areas and style options
+  - Keyword extraction from articles
+- **Backend Service** - Central API gateway that coordinates between all services
+- **Frontend** - React application for user interaction
 
 ## Getting Started
+
+### Quick Start
+
+The application now offers simplified deployment options:
+
+1. **Local deployment with automatic setup**:
+   ```bash
+   ./startup.sh
+   ```
+
+2. **Docker Compose deployment**:
+   ```bash
+   docker-compose up --build
+   ```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### Prerequisites
 
 - Node.js 16+ and npm
 - Python 3.9+
+- Docker and Docker Compose (for containerized deployment)
 
 ### Quick Start Guide for Cursor AI
 
@@ -183,8 +213,12 @@ npm start
 ### Backend Service (port 5050)
 
 - `GET /api/v1/recommendations` - Get personalized recommendations
-- `GET /api/v1/news` - Get financial news articles
-- `POST /api/v1/chat` - Send a message to the chat interface
+- `GET /api/v1/products` - Get all available financial products
+- `GET /api/v1/news` - Get general financial news
+- `GET /api/v1/personalized-news` - Get personalized financial news based on user profile
+- `POST /api/v1/news/summarize` - Generate a summary of one or more news articles
+- `POST /api/v1/news/summarize-collection` - Generate a summary of a collection of news articles by their IDs
+- `POST /api/v1/chat` - Process chat messages
 
 ### Understander Service (port 5052)
 
@@ -195,6 +229,12 @@ npm start
 
 - `POST /api/v1/generate` - Generate recommendations based on user profile
 - `GET /api/v1/news` - Get financial news
+
+### News Analysis API
+
+- `POST /api/v1/news/personalized` - Get news articles personalized to a user vector
+- `POST /api/v1/news/process` - Process and index news articles
+- `POST /api/v1/news/summarize` - Generate summaries for news articles with customizable options
 
 ## Troubleshooting
 
@@ -216,6 +256,52 @@ npm start
 4. **Chat not working**:
    - Ensure the understander service is running
    - Check browser console for API errors
+
+- If services fail to connect, check that all services are running and that the `config.json` URLs are correct.
+- For authentication issues, verify that the `auth_service_url` is correct and that the Auth Service is running.
+- If Docker containers fail to build, ensure Docker is running and that you have sufficient permissions.
+
+## API Examples
+
+### News Summarization
+
+#### Summarize Articles
+```
+POST /api/v1/news/summarize
+Content-Type: application/json
+Authorization: Bearer <user_token>
+
+{
+  "articles": [
+    {
+      "id": "news123",
+      "title": "Market Rally Continues for Third Day",
+      "content": "The stock market continued its upward trend for the third consecutive day, with tech stocks leading the gains..."
+    }
+  ],
+  "options": {
+    "max_length": 150,
+    "focus": "market_impact",
+    "style": "concise"
+  }
+}
+```
+
+#### Summarize Collection by IDs
+```
+POST /api/v1/news/summarize-collection
+Content-Type: application/json
+Authorization: Bearer <user_token>
+
+{
+  "news_ids": ["news123", "news456", "news789"],
+  "options": {
+    "max_length": 300,
+    "focus": "investment_opportunities",
+    "style": "detailed"
+  }
+}
+```
 
 ## Contributing
 

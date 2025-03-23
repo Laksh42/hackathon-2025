@@ -1,0 +1,33 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY news/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install common dependencies
+RUN pip install flask flask_cors requests fastapi uvicorn pydantic
+
+# Copy service code and config
+COPY news/ /app/news/
+COPY config.json /app/config.json
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV CONFIG_PATH=/app/config.json
+
+# Expose port
+EXPOSE 5054
+
+# Set the working directory to the service directory
+WORKDIR /app/news
+
+# Run the service
+CMD ["python", "app.py"] 

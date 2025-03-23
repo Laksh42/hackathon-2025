@@ -3,23 +3,67 @@
   "chat_timeout": 300,
   "model_name": "gpt-j",
   "confidence_threshold": 0.7,
+  "api_keys": {
+    "huggingface": "YOUR_HUGGINGFACE_API_KEY",
+    "openai": "YOUR_OPENAI_API_KEY"
+  },
+  "ai_models": {
+    "embedding": {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "provider": "huggingface",
+      "dimension": 384
+    },
+    "llm": {
+      "primary_model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "fallback_model": "openai/gpt-3.5-turbo",
+      "provider": "huggingface",
+      "max_new_tokens": 512,
+      "temperature": 0.7
+    }
+  },
   "services": {
     "auth": {
-      "host": "auth",
-      "port": 5053
-    },
-    "backend": {
-      "host": "backend",
-      "port": 5050
-    },
-    "understander": {
-      "host": "understander",
-      "port": 5051
+      "url": "http://localhost:5053",
+      "timeout": 10
     },
     "recommender": {
-      "host": "recommender",
-      "port": 5052
+      "url": "http://localhost:5051",
+      "timeout": 10
+    },
+    "understander": {
+      "url": "http://localhost:5052",
+      "timeout": 10
+    },
+    "backend": {
+      "url": "http://localhost:5050",
+      "timeout": 10
+    },
+    "news": {
+      "url": "http://localhost:5054",
+      "timeout": 10
+    },
+    "news_analysis": {
+      "url": "http://localhost:5055",
+      "timeout": 10
     }
+  },
+  "vector_db": {
+    "type": "chroma",
+    "path": "./vector_db",
+    "collection_names": {
+      "conversations": "conversation_history",
+      "news": "financial_news",
+      "products": "financial_products"
+    }
+  },
+  "chat": {
+    "history_limit": 10,
+    "sessionStorageKey": "wf_chat_session"
+  },
+  "rag": {
+    "enabled": true,
+    "max_documents": 5,
+    "similarity_threshold": 0.7
   },
   "dialogue_templates": {
     "greeting": "Welcome to the Wells Fargo Financial Assistant! I'll help you discover financial products tailored to your needs.",

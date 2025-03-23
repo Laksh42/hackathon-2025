@@ -21,50 +21,82 @@ services:
       - app-network
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     ports:
       - "5050:5050"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
+      - ./config.json:/app/config.json
     environment:
-      - PORT=5050
       - CONFIG_PATH=/app/config.json
-      - UNDERSTANDER_SERVICE=http://understander:5052
-      - RECOMMENDER_SERVICE=http://recommender:5051
-      - AUTH_SERVICE=http://auth:5053
-      - DEBUG=true
+      - PYTHONPATH=/app
     depends_on:
-      - recommender
-      - understander
-      - auth
-    networks:
-      - app-network
+      news_analysis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   recommender:
-    build: ./recommender
+    build:
+      context: .
+      dockerfile: Dockerfile.recommender
     ports:
       - "5051:5051"
     volumes:
-      - ./recommender:/app
+      - ./recommender:/app/recommender
+      - ./config.json:/app/config.json
     environment:
-      - PORT=5051
       - CONFIG_PATH=/app/config.json
-      - DEBUG=true
-    networks:
-      - app-network
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5051/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # News Analysis Service
+  news_analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile.news_analysis
+    ports:
+      - "5055:5055"
+    volumes:
+      - ./news_analysis:/app/news_analysis
+      - ./ai_utils:/app/ai_utils
+      - ./config.json:/app/config.json
+    environment:
+      - CONFIG_PATH=/app/config.json
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   understander:
-    build: ./understander
+    build:
+      context: .
+      dockerfile: Dockerfile.understander
     ports:
       - "5052:5052"
     volumes:
-      - ./understander:/app
+      - ./understander:/app/understander
+      - ./ai_utils:/app/ai_utils
+      - ./config.json:/app/config.json
     environment:
-      - PORT=5052
       - CONFIG_PATH=/app/config.json
-      - DEBUG=true
-    networks:
-      - app-network
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5052/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   auth:
     build: ./auth
@@ -111,3 +143,5 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  default:
+    name: financial-assistant-network
