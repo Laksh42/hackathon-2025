@@ -6,7 +6,7 @@ import PrivateRoute from './components/PrivateRoute';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import ChatInterface from './components/ChatInterface';
-import RecommendationsPage from './components/RecommendationsPage';
+import RecommendationsPage from './pages/RecommendationsPage';
 import { config } from './config';
 
 // Create a custom theme

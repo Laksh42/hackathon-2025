@@ -23,7 +23,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Configure JWT
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-secret-key')
+
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'VnbRyn2dIcom20/8Y0o9fQrg00Ew2RRPxA9Gj0CoGK0=')
     jwt = JWTManager(app)
     
     # Initialize database

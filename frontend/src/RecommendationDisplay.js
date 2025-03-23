@@ -19,7 +19,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 
-const RecommendationDisplay = ({ recommendationData, onReset }) => {
+const RecommendationDisplay = ({ recommendationData, onReset, compact }) => {
   // Add debugging to see what data we're receiving
   console.log('RecommendationDisplay received data structure:', {
     hasData: !!recommendationData,
@@ -43,24 +43,44 @@ const RecommendationDisplay = ({ recommendationData, onReset }) => {
         <Alert severity="warning" sx={{ mb: 3 }}>
           No recommendation data was received. Please try again or contact support.
         </Alert>
-        <Button variant="contained" color="primary" onClick={onReset}>
-          Start New Assessment
-        </Button>
+        {onReset && (
+          <Button variant="contained" color="primary" onClick={onReset}>
+            Start New Assessment
+          </Button>
+        )}
       </Box>
     );
   }
 
-  // Fix the destructuring to handle different data structures
   // Check both convention styles: recommendations vs recommendation (singular)
-  const recommendations = recommendationData.recommendations || 
-                         recommendationData.recommendation || 
-                         [];
+  const recommendations = recommendationData.recommendations ||
+    recommendationData.recommendation || [];
+    
+  // For single recommendation display from Dashboard (compact version)
+  if (compact && recommendations.length === 1) {
+    const rec = recommendations[0];
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" gutterBottom>
+            {rec.product.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {rec.product.description}
+          </Typography>
+          <Box mt={2}>
+            <Typography variant="body2" fontWeight="bold">
+              Confidence: {(rec.confidence * 100).toFixed(0)}%
+            </Typography>
+          </Box>
+        </CardContent>
+        <CardActions>
+          <Button size="small">Learn More</Button>
+        </CardActions>
+      </Card>
+    );
+  }
   
-  const relevant_news = recommendationData.relevant_news || 
-                        recommendationData.relevantNews || 
-                        recommendationData.news || 
-                        [];
-
   // Handle empty recommendations
   if (!recommendations || recommendations.length === 0) {
     return (
@@ -174,7 +194,7 @@ const RecommendationDisplay = ({ recommendationData, onReset }) => {
         ))}
       </Grid>
       
-      {relevant_news && relevant_news.length > 0 && (
+      {recommendationData.relevant_news && recommendationData.relevant_news.length > 0 && (
         <Box sx={{ mt: 5, mb: 4 }}>
           <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
             <NewspaperIcon sx={{ mr: 1 }} />
@@ -183,7 +203,7 @@ const RecommendationDisplay = ({ recommendationData, onReset }) => {
           <Divider sx={{ mb: 3 }} />
           
           <Grid container spacing={3}>
-            {relevant_news.map((news, index) => (
+            {recommendationData.relevant_news.map((news, index) => (
               <Grid item xs={12} sm={6} key={index}>
                 <Card elevation={2}>
                   <CardContent>

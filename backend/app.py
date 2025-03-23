@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, origins="*")
 
 # Load configuration
 CONFIG_PATH = os.environ.get('CONFIG_PATH', '../config.json')
@@ -31,7 +31,8 @@ RECOMMENDER_SERVICE = os.environ.get('RECOMMENDER_SERVICE', config.get('services
 AUTH_SERVICE = os.environ.get('AUTH_SERVICE', config.get('services', {}).get('auth', {}).get('url', 'http://localhost:5053'))
 
 # JWT secret key
-JWT_SECRET = os.environ.get('JWT_SECRET', 'your_jwt_secret_key_change_in_production')
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'VnbRyn2dIcom20/8Y0o9fQrg00Ew2RRPxA9Gj0CoGK0=')
+
 
 # Decorator for routes that require authentication
 def jwt_required(f):
@@ -113,34 +114,75 @@ def get_recommendations():
     """Get recommendations based on user profile"""
     try:
         # Get user token for profile
-        token = request.headers['Authorization'].split(' ')[1]
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+        
+        if not token:
+            logger.error("No token provided in Authorization header")
+            return jsonify({"error": "Authentication token is missing"}), 401
+        
+        logger.info(f"Getting recommendations for token: {token[:10]}...")
         
         # Request user profile from auth service
-        persona_response = requests.get(
-            f"{AUTH_SERVICE}/api/v1/auth/persona",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5
-        )
-        
-        if persona_response.status_code != 200:
-            return jsonify({"error": "Could not retrieve user profile"}), 400
-        
-        user_profile = persona_response.json().get('persona', {})
+        try:
+            persona_response = requests.get(
+                f"{AUTH_SERVICE}/api/v1/auth/persona",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5
+            )
+            
+            if persona_response.status_code != 200:
+                logger.error(f"Failed to get persona: {persona_response.status_code} - {persona_response.text}")
+                return jsonify({"error": f"Could not retrieve user profile: {persona_response.text}"}), 400
+            
+            logger.info(f"Got persona response: {persona_response.status_code}")
+            user_profile = persona_response.json().get('persona', {})
+            logger.info(f"User profile: {user_profile}")
+            
+            if not user_profile:
+                logger.error("Empty profile returned from auth service")
+                return jsonify({"error": "User profile is empty"}), 400
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error communicating with auth service: {str(e)}")
+            return jsonify({"error": f"Failed to retrieve profile: {str(e)}"}), 500
         
         # Request recommendations from recommender service
-        response = requests.post(
-            f"{RECOMMENDER_SERVICE}/api/v1/generate",
-            json={"profile": user_profile, "vector": user_profile.get('vector', [])},
-            timeout=10
-        )
+        try:
+            request_data = {
+                "profile": user_profile,
+                "vector": user_profile.get('vector', [])
+            }
+            logger.info(f"Sending to recommender: {request_data}")
+            
+            response = requests.post(
+                f"{RECOMMENDER_SERVICE}/api/v1/generate",
+                json=request_data,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Recommender error: {response.status_code} - {response.text}")
+                return jsonify({"error": f"Failed to generate recommendations: {response.text}"}), response.status_code
+            
+            logger.info(f"Got recommender response with status: {response.status_code}")
+            
+            # Parse response
+            try:
+                recommender_data = response.json()
+                logger.info(f"Recommendation data contains {len(recommender_data.get('recommendations', []))} items")
+                return jsonify(recommender_data), 200
+            except ValueError:
+                logger.error(f"Invalid JSON from recommender: {response.text[:100]}")
+                return jsonify({"error": "Invalid response from recommendation service"}), 500
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to connect to recommender: {str(e)}")
+            return jsonify({"error": f"Failed to generate recommendations: {str(e)}"}), 500
         
-        # Return recommender response
-        return jsonify(response.json()), response.status_code
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error communicating with service: {str(e)}")
-        return jsonify({"error": f"Service communication error: {str(e)}"}), 500
-    
     except Exception as e:
         logger.error(f"Error getting recommendations: {str(e)}")
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500

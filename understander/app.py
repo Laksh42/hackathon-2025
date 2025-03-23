@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Load configuration
 config_path = os.environ.get('CONFIG_PATH', '../config.json')

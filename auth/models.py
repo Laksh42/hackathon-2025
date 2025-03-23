@@ -9,17 +9,19 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    has_persona = db.Column(db.Boolean, default=False)
+    password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
 
     def __init__(self, email, password):
         """Initialize a new user with email and password"""
         self.email = email
         self.set_password(password)
-        self.has_persona = False
 
     def set_password(self, password):
         """Set the password hash from a plaintext password"""
@@ -28,11 +30,6 @@ class User(db.Model):
     def check_password(self, password):
         """Check if the provided password matches the stored hash"""
         return check_password_hash(self.password_hash, password)
-    
-    def set_has_persona(self, has_persona):
-        """Set whether the user has a persona vector"""
-        self.has_persona = has_persona
-        self.updated_at = datetime.utcnow()
     
     @classmethod
     def get_by_email(cls, email):
@@ -51,10 +48,10 @@ class User(db.Model):
         """Convert user to dictionary for API responses"""
         return {
             'id': self.id,
+            'username': self.username,
             'email': self.email,
-            'has_persona': self.has_persona,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None
         }
 
 class UserPersona(db.Model):
@@ -63,11 +60,17 @@ class UserPersona(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    persona_vector = db.Column(db.JSON, nullable=False)  # Store the vector as JSON
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    income = db.Column(db.Float, nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    risk_tolerance = db.Column(db.String(20), nullable=True)
+    investment_goals = db.Column(db.String(100), nullable=True)
+    existing_products = db.Column(db.String(200), nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('persona', uselist=False))
+
+    def __repr__(self):
+        return f'<UserPersona for user_id {self.user_id}>'
 
     def __init__(self, user_id, persona_vector):
         """Initialize a new user persona with user_id and vector"""
@@ -104,7 +107,10 @@ class UserPersona(db.Model):
         return {
             'id': self.id,
             'user_id': self.user_id,
-            'persona_vector': self.persona_vector,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'income': self.income,
+            'age': self.age,
+            'risk_tolerance': self.risk_tolerance,
+            'investment_goals': self.investment_goals,
+            'existing_products': self.existing_products,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

@@ -52,7 +52,7 @@ export const config = {
   
   // Chat interface settings
   chat: {
-    maxMessages: 100,
+    maxMessages: 10,
     typingIndicatorDelay: 1000,
     aiResponseDelay: 800,
     sessionStorageKey: 'chatSession',

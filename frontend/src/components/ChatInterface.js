@@ -233,6 +233,7 @@ const ChatInterface = ({ isOnboarding = false }) => {
 
   // Extract user persona from dialogue history
   const extractUserPersona = async (sid) => {
+    console.log('Extracting user persona for session:', sid || sessionId);
     try {
       const response = await axios.post(
         `${config.services.understander.url}/api/v1/user/profile`,
@@ -242,29 +243,58 @@ const ChatInterface = ({ isOnboarding = false }) => {
         { timeout: 10000 }
       );
       
+      console.log('User profile API response:', response.data);
+      
       if (response.data) {
+        console.log('Setting user persona:', response.data);
         setUserPersona(response.data);
-        
-        // If in onboarding mode, save the persona to user profile
-        if (isOnboarding) {
-          await saveUserPersona(response.data);
-        }
+        return response.data;
+      } else {
+        console.error('No data in profile response');
+        setError('Unable to create your financial profile. Please try again.');
+        return null;
       }
     } catch (error) {
       console.error('Error extracting user persona:', error);
+      setError('Failed to create your financial profile. Please try again.');
+      return null;
     }
   };
 
   // Handle completing the onboarding
   const handleCompleteOnboarding = async () => {
-    if (isOnboarding && userPersona) {
-      try {
+    console.log('Complete onboarding called, userPersona:', userPersona);
+    
+    try {
+      // If userPersona is null, try to extract it again
+      let persona = userPersona;
+      if (!persona) {
+        console.log('No user persona available, attempting to extract again');
+        persona = await extractUserPersona(sessionId);
+        
+        if (!persona) {
+          console.error('Failed to extract user persona');
+          setError('Unable to create your financial profile. Please try again.');
+          return;
+        }
+      }
+      
+      console.log('Completing onboarding with persona:', persona);
+      
+      // Make sure persona is saved
+      const result = await saveUserPersona(persona);
+      
+      if (result && result.success) {
+        console.log('Successfully saved persona, navigating to dashboard');
         // Navigate to recommendations page
         navigate('/dashboard');
-      } catch (error) {
-        console.error('Error completing onboarding:', error);
-        setError('Failed to complete onboarding. Please try again.');
+      } else {
+        console.error('Failed to save persona:', result);
+        setError('Failed to save your profile. Please try again.');
       }
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      setError('Failed to complete onboarding. Please try again.');
     }
   };
 

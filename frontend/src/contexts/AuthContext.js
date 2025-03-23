@@ -213,17 +213,33 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError('');
+      
+      console.log('AuthContext: Saving persona:', persona);
+
+      // Format persona data to match what the auth service expects
+      const formattedPersona = {
+        income: persona.income || persona.financial_profile?.income || 0,
+        age: persona.age || persona.demographics?.age || 30,
+        risk_tolerance: persona.risk_tolerance || persona.preferences?.risk_tolerance || 'moderate',
+        investment_goals: persona.investment_goals || persona.preferences?.investment_goals || 'general',
+        existing_products: persona.existing_products || (persona.financial_profile?.existing_products || []).join(', ') || ''
+      };
+      
+      console.log('AuthContext: Formatted persona for API:', formattedPersona);
 
       const response = await axios.post(
         `${config.services.auth.url}/api/v1/auth/persona`,
-        { persona },
+        formattedPersona,
         { timeout: 10000 }
       );
+      
+      console.log('AuthContext: Save persona response:', response.data);
 
       if (response.data && response.data.success) {
         setUserPersona(persona);
         return { success: true };
       } else {
+        console.error('AuthContext: Failed to save persona:', response.data);
         setError('Failed to save user persona');
         return { success: false, error: 'Failed to save user persona' };
       }

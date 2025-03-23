@@ -78,55 +78,6 @@ def register():
         response = jsonify({"error": str(e)})
         return response, 500
 
-@auth_bp.route('/check-auth', methods=['GET'])
-@jwt_required()
-def check_auth():
-    """Validate the JWT token and return user data"""
-    try:
-        # Get user ID from JWT token
-        user_id = get_jwt_identity()
-        
-        # Get user from database
-        user = User.query.get(user_id)
-        
-        if not user:
-            return jsonify({
-                "authenticated": False,
-                "error": "User not found"
-            }), 404
-        
-        # Check if user has persona
-        has_persona = bool(UserPersona.query.filter_by(user_id=user_id).first())
-        
-        return jsonify({
-            "authenticated": True,
-            "user": user.to_dict(),
-            "has_persona": has_persona
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "authenticated": False,
-            "error": str(e)
-        }), 401
-
-@auth_bp.route('/persona', methods=['GET'])
-@jwt_required()
-def get_user_persona():
-    """Get user persona data"""
-    user_id = get_jwt_identity()
-    
-    # Get user persona
-    persona = UserPersona.query.filter_by(user_id=user_id).first()
-    
-    if not persona:
-        return jsonify({
-            "error": "Persona not found"
-        }), 404
-    
-    return jsonify({
-        "persona": persona.to_dict()
-    }), 200
-
 @auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
     """Authenticate a user and return JWT token"""
@@ -188,27 +139,149 @@ def get_profile():
 @jwt_required()
 def update_profile():
     user_id = get_jwt_identity()
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-        
     user = User.query.get(user_id)
     
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    # Update user fields
-    if 'username' in data and data['username'] != user.username:
-        # Check if username is already taken
-        if User.query.filter_by(username=data['username']).first():
-            return jsonify({"error": "Username already taken"}), 409
-        user.username = data['username']
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
         
-    # Save changes
-    db.session.commit()
+    # Update user fields
+    if 'username' in data:
+        username = data['username']
+        existing = User.query.filter_by(username=username).first()
+        if existing and existing.id != user_id:
+            return jsonify({"error": "Username already taken"}), 409
+        user.username = username
+    
+    # Update or create persona
+    persona = UserPersona.query.filter_by(user_id=user_id).first()
+    if not persona:
+        persona = UserPersona()
+        persona.user_id = user_id
+        db.session.add(persona)
+    
+    persona_fields = ['income', 'age', 'risk_tolerance', 'investment_goals', 'existing_products']
+    for field in persona_fields:
+        if field in data:
+            setattr(persona, field, data[field])
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": "Profile updated successfully",
+            "user": user.to_dict(),
+            "persona": persona.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@auth_bp.route('/check-auth', methods=['GET'])
+@jwt_required()
+def check_auth():
+    """Validate the JWT token and return user data"""
+    try:
+        # Get user ID from JWT token
+        user_id = get_jwt_identity()
+        
+        # Get user from database
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({
+                "authenticated": False,
+                "error": "User not found"
+            }), 404
+        
+        # Check if user has persona
+        has_persona = bool(UserPersona.query.filter_by(user_id=user_id).first())
+        
+        return jsonify({
+            "authenticated": True,
+            "user": user.to_dict(),
+            "has_persona": has_persona
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "authenticated": False,
+            "error": str(e)
+        }), 401
+
+@auth_bp.route('/persona', methods=['GET'])
+@jwt_required()
+def get_user_persona():
+    """Get user persona data"""
+    user_id = get_jwt_identity()
+    
+    # Get user persona
+    persona = UserPersona.query.filter_by(user_id=user_id).first()
+    
+    if not persona:
+        return jsonify({
+            "error": "Persona not found"
+        }), 404
     
     return jsonify({
-        "message": "Profile updated successfully",
-        "user": user.to_dict()
+        "persona": persona.to_dict()
     }), 200
+
+@auth_bp.route('/persona', methods=['POST'])
+@jwt_required()
+def save_user_persona():
+    """Save user persona data"""
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    try:
+        # Check if user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if persona already exists
+        persona = UserPersona.query.filter_by(user_id=user_id).first()
+        
+        # Get persona data from request
+        income = data.get('income')
+        age = data.get('age')
+        risk_tolerance = data.get('risk_tolerance')
+        investment_goals = data.get('investment_goals')
+        existing_products = data.get('existing_products')
+        
+        if persona:
+            # Update existing persona
+            persona.income = income
+            persona.age = age
+            persona.risk_tolerance = risk_tolerance
+            persona.investment_goals = investment_goals
+            persona.existing_products = existing_products
+            persona.updated_at = datetime.utcnow()
+        else:
+            # Create new persona
+            persona = UserPersona(
+                user_id=user_id,
+                persona_vector='{}' # Legacy field, keeping for backward compatibility
+            )
+            persona.income = income
+            persona.age = age
+            persona.risk_tolerance = risk_tolerance
+            persona.investment_goals = investment_goals
+            persona.existing_products = existing_products
+            db.session.add(persona)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Persona saved successfully"
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
